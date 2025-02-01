@@ -167,12 +167,6 @@ dependencies {
 
     implementation(libs.common)
 
-    // Circle Image view
-    implementation(libs.circleimageview)
-
-    // Pinch To Zoom
-    implementation(libs.pinchtozoom)
-
     //Places SDK
     implementation(libs.places)
 

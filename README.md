@@ -39,11 +39,9 @@ This project includes the following libraries:
 
 - **Dagger Hilt**: [com.google.dagger](https://dagger.dev/hilt/)[:hilt-android](https://dagger.dev/hilt/)
 
-### Image Loading & UI Components
+### UI Components
 
 - **Glide**: [com.github.bumptech.glide](https://github.com/bumptech/glide)[:glide](https://github.com/bumptech/glide)
-- **CircleImageView**: [de.hdodenhof](https://github.com/hdodenhof/CircleImageView)[:circleimageview](https://github.com/hdodenhof/CircleImageView)
-- **Pinch to Zoom**: [com.bogdwellers](https://github.com/MikeOrtiz/TouchImageView)[:pinchtozoom](https://github.com/MikeOrtiz/TouchImageView)
 - **Fragment Navigation**: [com.github.ncapdevi](https://github.com/ncapdevi/FragNav)[:fragnav](https://github.com/ncapdevi/FragNav)
 
 ### Kotlin & Coroutines
