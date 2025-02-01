@@ -170,9 +170,6 @@ dependencies {
     // Circle Image view
     implementation(libs.circleimageview)
 
-    // Image Picker
-    implementation(libs.imagepicker)
-
     // Pinch To Zoom
     implementation(libs.pinchtozoom)
 

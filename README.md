@@ -44,7 +44,6 @@ This project includes the following libraries:
 - **Glide**: [com.github.bumptech.glide](https://github.com/bumptech/glide)[:glide](https://github.com/bumptech/glide)
 - **CircleImageView**: [de.hdodenhof](https://github.com/hdodenhof/CircleImageView)[:circleimageview](https://github.com/hdodenhof/CircleImageView)
 - **Pinch to Zoom**: [com.bogdwellers](https://github.com/MikeOrtiz/TouchImageView)[:pinchtozoom](https://github.com/MikeOrtiz/TouchImageView)
-- **Image Picker**: [com.github.Drjacky](https://github.com/Drjacky/ImagePicker)[:ImagePicker](https://github.com/Drjacky/ImagePicker)
 - **Fragment Navigation**: [com.github.ncapdevi](https://github.com/ncapdevi/FragNav)[:fragnav](https://github.com/ncapdevi/FragNav)
 
 ### Kotlin & Coroutines
