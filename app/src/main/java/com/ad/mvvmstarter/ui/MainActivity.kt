@@ -59,6 +59,7 @@ class MainActivity : BaseActivity(), GetBottomBarCallback, FragNavController.Roo
 
         setupFragNav()
         setBottomBarClickListener()
+
     }
 
 

@@ -7,10 +7,13 @@ import android.view.ViewGroup
 import androidx.fragment.app.viewModels
 import com.ad.mvvmstarter.R
 import com.ad.mvvmstarter.core.BaseFragment
+import com.ad.mvvmstarter.core.Resource
 import com.ad.mvvmstarter.databinding.FragmentHomeBinding
+import timber.log.Timber
 
 class HomeFragment : BaseFragment() {
     companion object {
+        const val TAG = "HomeFragment"
         fun getInstance() = HomeFragment()
     }
 
@@ -32,7 +35,12 @@ class HomeFragment : BaseFragment() {
 
         if (isFirstTimeLoad) {
             initUI()
+            callGetDeviceListApi()
         }
+    }
+
+    private fun callGetDeviceListApi() {
+        viewModel.callGetListOfDevices()
     }
 
     private fun initUI() {
@@ -40,6 +48,20 @@ class HomeFragment : BaseFragment() {
     }
 
     override fun attachObserver() {
+        viewModel.listOfDevicesLiveData.observe(this) {
+            when (it) {
+                is Resource.Error -> {
+                    Timber.tag(TAG).e("Api Error ${it.errorCode} ${it.errorMessage}")
+                }
 
+                is Resource.Loading -> {
+                    Timber.tag(TAG).i("Api is Loading...")
+                }
+
+                is Resource.Success -> {
+                    Timber.tag(TAG).i("Api Success ${it.data.toString()}")
+                }
+            }
+        }
     }
 }

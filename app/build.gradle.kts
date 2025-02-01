@@ -6,9 +6,8 @@ import java.util.Locale
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.google.devtools.ksp")
-    id("com.google.dagger.hilt.android")
-    id("kotlin-kapt")
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.dagger.hilt)
 }
 
 android {
@@ -42,7 +41,7 @@ android {
                 dimension = "environment"
                 applicationId = "com.ad.mvvmstarter.stage"
                 buildConfigField(
-                    "String", "BASE_URL", "\"https://www.stage-server.com/\""
+                    "String", "BASE_URL", "\"https://api.restful-api.dev/\""
                 )
                 buildConfigField(
                     type = "String",
@@ -64,7 +63,7 @@ android {
                 dimension = "environment"
                 applicationId = "com.ad.mvvmstarter"
                 buildConfigField(
-                    "String", "BASE_URL", "\"https://www.live-server.com/\""
+                    "String", "BASE_URL", "\"https://api.restful-api.dev/\""
                 )
                 buildConfigField(
                     type = "String",
@@ -130,8 +129,10 @@ dependencies {
 
     // Image Loading
     implementation(libs.glide)
-    annotationProcessor(libs.compiler)
+    ksp(libs.compiler)
 
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 
     ksp(libs.ksp)
 

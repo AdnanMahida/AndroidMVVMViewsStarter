@@ -12,6 +12,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+/**
+ * RoomModule used for
+ * room db related DI
+ * */
 @Module
 @InstallIn(SingletonComponent::class)
 object RoomModule {

@@ -2,7 +2,9 @@ package com.ad.mvvmstarter.di
 
 import android.content.Context
 import com.ad.mvvmstarter.BuildConfig
+import com.ad.mvvmstarter.network.DemoService
 import com.ad.mvvmstarter.preference.AppPreference
+import com.ad.mvvmstarter.utility.AppConstants
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,11 +14,16 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
-
+/**
+ * ApiClientModule used for
+ * api related DI
+ * */
 @Module
 @InstallIn(SingletonComponent::class)
 class ApiClientModule {
@@ -28,7 +35,7 @@ class ApiClientModule {
         @ApplicationContext context: Context
     ) = AppPreference(context = context)
 
-    private class AuthorizationInterceptor(val preferences: AppPreference) : Interceptor {
+    class AuthorizationInterceptor(private val preferences: AppPreference) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
             val accessToken = preferences.accessToken
             var strToken = ""
@@ -46,17 +53,36 @@ class ApiClientModule {
         }
     }
 
+    @Provides
+    @Singleton
+    fun provideHttpInterceptor(
+        preferences: AppPreference
+    ) = OkHttpClient.Builder()
+        .addInterceptor(AuthorizationInterceptor(preferences))
+        .addInterceptor(HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        })
+        .connectTimeout(AppConstants.CONNECTION_TIMEOUT, TimeUnit.SECONDS)
+        .writeTimeout(AppConstants.WRITE_TIMEOUT, TimeUnit.SECONDS)
+        .readTimeout(AppConstants.READ_TIMEOUT, TimeUnit.SECONDS).build()
+
 
     @Provides
     @Singleton
-    fun provideHttpInterceptor(): OkHttpClient {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-        return OkHttpClient.Builder().addInterceptor(loggingInterceptor)
-            .connectTimeout(180, TimeUnit.SECONDS) // 180 seconds
-            .writeTimeout(180, TimeUnit.SECONDS) // 180 seconds
-            .readTimeout(180, TimeUnit.SECONDS).build() // 180 seconds
+    fun provideRetrofit(
+        baseUrl: String,
+        httpClient: OkHttpClient
+    ): Retrofit = Retrofit.Builder()
+        .baseUrl(baseUrl)
+        .addConverterFactory(GsonConverterFactory.create())
+        .client(httpClient.newBuilder().build())
+        .build()
+
+
+    @Provides
+    @Singleton
+    fun provideDemoService(retrofit: Retrofit): DemoService {
+        return retrofit.create(DemoService::class.java)
     }
 
 }
