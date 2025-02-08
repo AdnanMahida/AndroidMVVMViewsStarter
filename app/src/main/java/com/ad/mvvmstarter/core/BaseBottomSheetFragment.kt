@@ -26,7 +26,7 @@ abstract class BaseBottomSheetFragment : BottomSheetDialogFragment() {
     private var getBottomBarCallback: GetBottomBarCallback? = null
 
     /**
-     * Used when we dont want to create/inflate view if same fragment instance is used.
+     * Used when we don't want to create/inflate view if same fragment instance is used.
      */
     var isFirstTimeLoad: Boolean = true
     var prevViewDataBinding: ViewDataBinding? = null
@@ -91,7 +91,6 @@ abstract class BaseBottomSheetFragment : BottomSheetDialogFragment() {
         clearStack: Boolean = false
     ) {
         if (activity is BaseActivity) {
-//			(activity as AppCompatActivity?)?.hideKeyBoard()
             (activity as BaseActivity).popBackStack(
                 depth = depth,
                 needsAnimation = needsAnimation,

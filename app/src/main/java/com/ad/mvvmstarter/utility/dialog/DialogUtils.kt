@@ -3,6 +3,7 @@ package com.ad.mvvmstarter.utility.dialog
 import android.content.Context
 import android.content.DialogInterface
 import androidx.appcompat.app.AlertDialog
+import com.ad.mvvmstarter.R
 
 
 object DialogUtils {
@@ -12,7 +13,7 @@ object DialogUtils {
         message: String,
         isCancelable: Boolean = false,
         onPositiveCallback: ((DialogInterface?) -> Unit)? = null,
-        positiveBtnText: String = "Ok"
+        positiveBtnText: String = context.getString(R.string.ok)
     ) {
         val builder: AlertDialog.Builder = AlertDialog.Builder(context)
         builder.setMessage(message)
@@ -34,8 +35,8 @@ object DialogUtils {
         isCancelable: Boolean = false,
         onPositiveCallback: ((DialogInterface?) -> Unit)? = null,
         onNegativeCallback: ((DialogInterface?) -> Unit)? = null,
-        positiveBtnText: String = "Yes",
-        negativeBtnText: String = "No"
+        positiveBtnText: String = context.getString(R.string.yes),
+        negativeBtnText: String = context.getString(R.string.no)
     ) {
         val builder: AlertDialog.Builder = AlertDialog.Builder(context)
         builder.setMessage(message)

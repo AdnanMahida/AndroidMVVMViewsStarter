@@ -6,13 +6,12 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import java.io.File
 
-
 fun ImageView.loadImage(
     url: String? = null,
     file: File? = null,
     placeHolder: Int = com.ad.mvvmstarter.R.drawable.ic_launcher_background
 ) {
-    if (url?.trim()?.isNotEmpty() == true && url.trim().lowercase() != "null") {
+    if (url?.trim()?.isNotEmpty() == true) {
         val requestManager = Glide.with(this.context.applicationContext)
             .setDefaultRequestOptions(RequestOptions().timeout(60_000)).load(url)
             .diskCacheStrategy(DiskCacheStrategy.ALL)

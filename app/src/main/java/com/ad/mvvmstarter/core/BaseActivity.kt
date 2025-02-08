@@ -1,12 +1,9 @@
 package com.ad.mvvmstarter.core
 
-import android.app.Activity
-import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -16,10 +13,9 @@ import androidx.fragment.app.Fragment
 import com.ad.mvvmstarter.preference.AppPreference
 import com.ad.mvvmstarter.progress.ProgressBarDialog
 import com.ad.mvvmstarter.utility.AppConstants
-import com.ad.mvvmstarter.utility.dialog.DialogUtils
+import com.ad.mvvmstarter.utility.extension.hideKeyboard
 import com.ad.mvvmstarter.utility.extension.showSnackBar
 import com.ad.mvvmstarter.utility.helper.NetworkConnectionLiveData
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -136,7 +132,7 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     /**
-     * remove fragment
+     * Remove fragment
      * */
     open fun popBackStack(
         depth: Int = 0,
@@ -197,41 +193,4 @@ abstract class BaseActivity : AppCompatActivity() {
     fun hideKeyboard() {
         hideKeyboard(currentFocus ?: View(this))
     }
-
-    open fun Context.hideKeyboard(view: View) {
-        val inputMethodManager =
-            getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-        inputMethodManager.hideSoftInputFromWindow(
-            view.windowToken,
-            0
-        )
-    }
-
-    fun handleError(throwable: Throwable?) {
-        runOnUiThread {
-            throwable?.let { error ->
-                throwable.message?.let { msg ->
-
-                    throwable.message
-                    showSnackBar(
-                        throwable.message,
-                        Snackbar.LENGTH_SHORT,
-                        snackBarType = AppConstants.SnackBarType.ERROR
-                    )
-                }
-            }
-        }
-    }
-
-    fun isNetworkAvailable(): Boolean {
-//        if (!isNetworkConnected) {
-//            DialogUtils.showAlertDialog(this@BaseActivity,
-//                option1Text = "Please check your Internet connection!",
-//                positionBtnText = getString(R.string.ok),
-//                onPositiveCallback = {})
-//            return false
-//        }
-        return true
-    }
-
 }

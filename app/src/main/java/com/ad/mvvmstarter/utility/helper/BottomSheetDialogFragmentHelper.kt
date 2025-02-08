@@ -7,8 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.ad.mvvmstarter.R
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class BottomSheetDialogFragmentHelper<B : ViewDataBinding> : BottomSheetDialogFragment() {
     var viewCreatedCallback: ((binding: B, dialogFragment: BottomSheetDialogFragment) -> Unit)? =

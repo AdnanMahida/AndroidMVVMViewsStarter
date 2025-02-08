@@ -1,78 +1,73 @@
-package com.ad.mvvmstarter.utility.helper;
+package com.ad.mvvmstarter.utility.helper
 
-import static java.sql.DriverManager.println;
+import android.content.ContentUris
+import android.content.Context
+import android.content.Intent
+import android.database.Cursor
+import android.database.DatabaseUtils
+import android.graphics.Bitmap
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.DocumentsContract
+import android.provider.MediaStore
+import android.provider.OpenableColumns
+import android.util.Log
+import android.webkit.MimeTypeMap
+import androidx.core.content.FileProvider
+import okhttp3.ResponseBody
+import timber.log.Timber
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileFilter
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.nio.file.Files
+import java.sql.DriverManager
+import java.text.DecimalFormat
+import java.util.Locale
+import kotlin.math.min
 
-import android.content.ContentUris;
-import android.content.Context;
-import android.content.Intent;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.graphics.Bitmap;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
-import android.provider.DocumentsContract;
-import android.provider.MediaStore;
-import android.provider.OpenableColumns;
-import android.util.Log;
-import android.webkit.MimeTypeMap;
+object FileUtils {
+    private const val DOCUMENTS_DIR: String = "documents"
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.content.FileProvider;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.text.DecimalFormat;
-import java.util.Comparator;
-
-import okhttp3.ResponseBody;
-import timber.log.Timber;
-
-public class FileUtils {
-    public static final String DOCUMENTS_DIR = "documents";
     // configured android:authorities in AndroidManifest (https://developer.android.com/reference/android/support/v4/content/FileProvider)
-    public static final String AUTHORITY = "com.ad.mvvmstarter.provider";
-    public static final String HIDDEN_PREFIX = ".";
+    private const val AUTHORITY: String = "com.ad.mvvmstarter.provider"
+    private const val HIDDEN_PREFIX: String = "."
+
     /**
      * TAG for log messages.
      */
-    static final String TAG = "FileUtils";
-    private static final boolean DEBUG = false; // Set to true to enable logging
+    private const val TAG: String = "FileUtils"
+    private const val DEBUG = false // Set to true to enable logging
+
     /**
      * File and folder comparator.
      */
-    public static Comparator<File> sComparator = (f1, f2) -> {
-        // Sort alphabetically by lower case, which is much cleaner
-        return f1.getName().toLowerCase().compareTo(
-                f2.getName().toLowerCase());
-    };
+    var sComparator: Comparator<File> = Comparator { f1: File, f2: File ->
+        f1.name.lowercase(Locale.getDefault()).compareTo(
+            f2.name.lowercase(Locale.getDefault())
+        )
+    }
+
     /**
      * File (not directories) filter.
      */
-    public static FileFilter sFileFilter = file -> {
-        final String fileName = file.getName();
-        // Return files only (not directories) and skip hidden files
-        return file.isFile() && !fileName.startsWith(HIDDEN_PREFIX);
-    };
+    var sFileFilter: FileFilter = FileFilter { file: File ->
+        val fileName = file.name
+        file.isFile && !fileName.startsWith(HIDDEN_PREFIX)
+    }
+
     /**
      * Folder (directories) filter.
      */
-    public static FileFilter sDirFilter = file -> {
-        final String fileName = file.getName();
-        // Return directories only and skip hidden directories
-        return file.isDirectory() && !fileName.startsWith(HIDDEN_PREFIX);
-    };
-
-    private FileUtils() {
-    } //private constructor to enforce Singleton pattern
+    var sDirFilter: FileFilter = FileFilter { file: File ->
+        val fileName = file.name
+        file.isDirectory && !fileName.startsWith(HIDDEN_PREFIX)
+    }
 
     /**
      * Gets the extension of a file name, like ".png" or ".jpg".
@@ -81,33 +76,32 @@ public class FileUtils {
      * @return Extension including the dot("."); "" if there is no extension;
      * null if uri was null.
      */
-    public static String getExtension(String uri) {
+    fun getExtension(uri: String?): String? {
         if (uri == null) {
-            return null;
+            return null
         }
 
-        int dot = uri.lastIndexOf(".");
-        if (dot >= 0) {
-            return uri.substring(dot);
+        val dot = uri.lastIndexOf(".")
+        return if (dot >= 0) {
+            uri.substring(dot)
         } else {
             // No extension.
-            return "";
+            ""
         }
     }
 
     /**
      * @return Whether the URI is a local one.
      */
-    public static boolean isLocal(String url) {
-        return url != null && !url.startsWith("http://") && !url.startsWith("https://");
+    fun isLocal(url: String?): Boolean {
+        return url != null && !url.startsWith("http://") && !url.startsWith("https://")
     }
 
     /**
      * @return True if Uri is a MediaStore Uri.
-     * @author paulburke
      */
-    public static boolean isMediaUri(Uri uri) {
-        return "media".equalsIgnoreCase(uri.getAuthority());
+    fun isMediaUri(uri: Uri): Boolean {
+        return "media".equals(uri.authority, ignoreCase = true)
     }
 
     /**
@@ -116,8 +110,8 @@ public class FileUtils {
      * @param file
      * @return uri
      */
-    public static Uri getUri(File file) {
-        return (file != null) ? Uri.fromFile(file) : null;
+    fun getUri(file: File?): Uri? {
+        return if ((file != null)) Uri.fromFile(file) else null
     }
 
     /**
@@ -126,102 +120,100 @@ public class FileUtils {
      * @param file
      * @return
      */
-    public static File getPathWithoutFilename(File file) {
+    fun getPathWithoutFilename(file: File?): File? {
         if (file != null) {
-            if (file.isDirectory()) {
+            if (file.isDirectory) {
                 // no file to be split off. Return everything
-                return file;
+                return file
             } else {
-                String filename = file.getName();
-                String filepath = file.getAbsolutePath();
+                val filename = file.name
+                val filepath = file.absolutePath
 
                 // Construct path without file name.
-                String pathwithoutname = filepath.substring(0,
-                        filepath.length() - filename.length());
-                if (pathwithoutname.endsWith("/")) {
-                    pathwithoutname = pathwithoutname.substring(0, pathwithoutname.length() - 1);
+                var pathWithoutName = filepath.substring(
+                    0, filepath.length - filename.length
+                )
+                if (pathWithoutName.endsWith("/")) {
+                    pathWithoutName = pathWithoutName.substring(0, pathWithoutName.length - 1)
                 }
-                return new File(pathwithoutname);
+                return File(pathWithoutName)
             }
         }
-        return null;
+        return null
     }
 
     /**
      * @return The MIME type for the given file.
      */
-    public static String getMimeType(File file) {
+    fun getMimeType(file: File): String? {
+        val extension = getExtension(file.name)
 
-        String extension = getExtension(file.getName());
-
-        if (extension.length() > 0)
-            return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.substring(1));
-
-        return "application/octet-stream";
+        if (extension?.isNotEmpty() == true) return MimeTypeMap.getSingleton()
+            .getMimeTypeFromExtension(extension.substring(1))
+        else return "application/octet-stream"
     }
 
     /**
      * @return The MIME type for the give Uri.
      */
-    public static String getMimeType(Context context, Uri uri) {
-        File file = new File(getPath(context, uri));
-        return getMimeType(file);
+    fun getMimeType(context: Context, uri: Uri): String? {
+        val file = File(getPath(context, uri))
+        return getMimeType(file)
     }
 
     /**
      * @return The MIME type for the give String Uri.
      */
-    public static String getMimeType(Context context, String url) {
-        String type = context.getContentResolver().getType(Uri.parse(url));
+    fun getMimeType(context: Context, url: String?): String {
+        var type = context.contentResolver.getType(Uri.parse(url))
         if (type == null) {
-            type = "application/octet-stream";
+            type = "application/octet-stream"
         }
-        return type;
+        return type
     }
 
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority is local.
      */
-    public static boolean isLocalStorageDocument(Uri uri) {
-        return AUTHORITY.equals(uri.getAuthority());
+    fun isLocalStorageDocument(uri: Uri): Boolean {
+        return AUTHORITY == uri.authority
     }
 
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority is ExternalStorageProvider.
      */
-    public static boolean isExternalStorageDocument(Uri uri) {
-        return "com.android.externalstorage.documents".equals(uri.getAuthority());
+    fun isExternalStorageDocument(uri: Uri): Boolean {
+        return "com.android.externalstorage.documents" == uri.authority
     }
 
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority is DownloadsProvider.
      */
-    public static boolean isDownloadsDocument(Uri uri) {
-        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+    fun isDownloadsDocument(uri: Uri): Boolean {
+        return "com.android.providers.downloads.documents" == uri.authority
     }
 
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority is MediaProvider.
      */
-    public static boolean isMediaDocument(Uri uri) {
-        return "com.android.providers.media.documents".equals(uri.getAuthority());
+    fun isMediaDocument(uri: Uri): Boolean {
+        return "com.android.providers.media.documents" == uri.authority
     }
 
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority is Google Photos.
      */
-    public static boolean isGooglePhotosUri(Uri uri) {
-        return "com.google.android.apps.photos.content".equals(uri.getAuthority());
+    fun isGooglePhotosUri(uri: Uri): Boolean {
+        return "com.google.android.apps.photos.content" == uri.authority
     }
 
-    public static boolean isGoogleDriveUri(Uri uri) {
-        return "com.google.android.apps.docs.storage.legacy".equals(uri.getAuthority()) ||
-                "com.google.android.apps.docs.storage".equals(uri.getAuthority());
+    fun isGoogleDriveUri(uri: Uri): Boolean {
+        return "com.google.android.apps.docs.storage.legacy" == uri.authority || "com.google.android.apps.docs.storage" == uri.authority
     }
 
     /**
@@ -234,178 +226,164 @@ public class FileUtils {
      * @param selectionArgs (Optional) Selection arguments used in the query.
      * @return The value of the _data column, which is typically a file path.
      */
-    public static String getDataColumn(Context context, Uri uri, String selection,
-                                       String[] selectionArgs) {
-
-        Cursor cursor = null;
-        final String column = MediaStore.Files.FileColumns.DATA;
-        final String[] projection = {
-                column
-        };
+    fun getDataColumn(
+        context: Context, uri: Uri, selection: String?, selectionArgs: Array<String>?
+    ): String? {
+        var cursor: Cursor? = null
+        val column = MediaStore.Files.FileColumns.DATA
+        val projection = arrayOf(
+            column
+        )
 
         try {
-            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
-                    null);
+            cursor = context.contentResolver.query(
+                uri, projection, selection, selectionArgs, null
+            )
             if (cursor != null && cursor.moveToFirst()) {
-                if (DEBUG)
-                    DatabaseUtils.dumpCursor(cursor);
+                if (DEBUG) DatabaseUtils.dumpCursor(cursor)
 
-                final int column_index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(column_index);
+                val column_index = cursor.getColumnIndexOrThrow(column)
+                return cursor.getString(column_index)
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (e: Exception) {
+            e.printStackTrace()
         } finally {
-            if (cursor != null)
-                cursor.close();
+            cursor?.close()
         }
-        return null;
+        return null
     }
 
     /**
      * Get a file path from a Uri. This will get the the path for Storage Access
      * Framework Documents, as well as the _data field for the MediaStore and
-     * other file-based ContentProviders.<br>
-     * <br>
+     * other file-based ContentProviders.<br></br>
+     * <br></br>
      * Callers should check whether the path is local before assuming it
      * represents a local file.
      *
      * @param context The context.
      * @param uri     The Uri to query.
-     * @see #isLocal(String)
-     * @see #getFile(Context, Uri)
+     * @see .isLocal
+     * @see .getFile
      */
-    public static String getPath(final Context context, final Uri uri) {
-        String absolutePath = getLocalPath(context, uri);
-        return absolutePath != null ? absolutePath : uri.toString();
+    fun getPath(context: Context, uri: Uri): String {
+        val absolutePath = getLocalPath(context, uri)
+        return absolutePath ?: uri.toString()
     }
 
-    private static String getLocalPath(final Context context, final Uri uri) {
+    private fun getLocalPath(context: Context, uri: Uri): String? {
+        if (DEBUG) Timber.tag("$TAG File -").d(
+            "%s%s",
+            "Authority: " + uri.authority + ", Fragment: " + uri.fragment + ", Port: " + uri.port + ", Query: " + uri.query + ", Scheme: " + uri.scheme + ", Host: " + uri.host + ", Segments: ",
+            uri.pathSegments.toString()
+        )
 
-        if (DEBUG)
-            Timber.tag(TAG + " File -").d("Authority: " + uri.getAuthority() +
-                    ", Fragment: " + uri.getFragment() +
-                    ", Port: " + uri.getPort() +
-                    ", Query: " + uri.getQuery() +
-                    ", Scheme: " + uri.getScheme() +
-                    ", Host: " + uri.getHost() +
-                    ", Segments: " + uri.getPathSegments().toString());
-
-        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+        val isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
 
         // DocumentProvider
         if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
             // LocalStorageProvider
             if (isLocalStorageDocument(uri)) {
                 // The path is the id
-                return DocumentsContract.getDocumentId(uri);
-            }
-            // ExternalStorageProvider
-            else if (isExternalStorageDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
+                return DocumentsContract.getDocumentId(uri)
+            } else if (isExternalStorageDocument(uri)) {
+                val docId = DocumentsContract.getDocumentId(uri)
+                val split = docId.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                val type = split[0]
 
-                if ("primary".equalsIgnoreCase(type)) {
-                    return Environment.getExternalStorageDirectory() + "/" + split[1];
-                } else if ("home".equalsIgnoreCase(type)) {
-                    return Environment.getExternalStorageDirectory() + "/documents/" + split[1];
+                if ("primary".equals(type, ignoreCase = true)) {
+                    return Environment.getExternalStorageDirectory().toString() + "/" + split[1]
+                } else if ("home".equals(type, ignoreCase = true)) {
+                    return Environment.getExternalStorageDirectory()
+                        .toString() + "/documents/" + split[1]
                 }
-            }
-            // DownloadsProvider
-            else if (isDownloadsDocument(uri)) {
-
-                final String id = DocumentsContract.getDocumentId(uri);
+            } else if (isDownloadsDocument(uri)) {
+                val id = DocumentsContract.getDocumentId(uri)
 
                 if (id != null && id.startsWith("raw:")) {
-                    return id.substring(4);
+                    return id.substring(4)
                 }
 
-                String[] contentUriPrefixesToTry = new String[]{
-                        "content://downloads/public_downloads",
-                        "content://downloads/my_downloads"
-                };
+                val contentUriPrefixesToTry = arrayOf(
+                    "content://downloads/public_downloads", "content://downloads/my_downloads"
+                )
 
-                for (String contentUriPrefix : contentUriPrefixesToTry) {
+                for (contentUriPrefix in contentUriPrefixesToTry) {
                     try {
-                        Uri contentUri = ContentUris.withAppendedId(Uri.parse(contentUriPrefix), Long.valueOf(id.split(":")[1]));
-                        String path = getDataColumn(context, contentUri, null, null);
+                        val contentUri = ContentUris.withAppendedId(
+                            Uri.parse(contentUriPrefix), id!!.split(
+                                ":".toRegex()
+                            ).dropLastWhile { it.isEmpty() }.toTypedArray()[1].toLong()
+                        )
+                        val path = getDataColumn(context, contentUri, null, null)
                         if (path != null) {
-                            return path;
+                            return path
                         }
-                    } catch (Exception e) {
+                    } catch (e: Exception) {
                     }
                 }
 
                 // path could not be retrieved using ContentResolver, therefore copy file to accessible cache using streams
-                String fileName = getFileName(context, uri);
-                File cacheDir = getDocumentCacheDir(context);
-                File file = generateFileName(fileName, cacheDir);
-                String destinationPath = null;
+                val fileName = getFileName(context, uri)
+                val cacheDir = getDocumentCacheDir(context)
+                val file = generateFileName(fileName, cacheDir)
+                var destinationPath: String? = null
                 if (file != null) {
-                    destinationPath = file.getAbsolutePath();
-                    saveFileFromUri(context, uri, destinationPath);
+                    destinationPath = file.absolutePath
+                    saveFileFromUri(context, uri, destinationPath)
                 }
 
-                return destinationPath;
-            }
-            // MediaProvider
-            else if (isMediaDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
+                return destinationPath
+            } else if (isMediaDocument(uri)) {
+                val docId = DocumentsContract.getDocumentId(uri)
+                val split = docId.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                val type = split[0]
 
-                Uri contentUri = null;
-                if ("image".equals(type)) {
-                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                } else if ("video".equals(type)) {
-                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-                } else if ("audio".equals(type)) {
-                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                } else if ("document".equals(type)) {
-                    String fileName = getFileName(context, uri);
-                    File cacheDir = getDocumentCacheDir(context);
-                    File file = generateFileName(fileName, cacheDir);
-                    String destinationPath = null;
+                var contentUri: Uri? = null
+                if ("image" == type) {
+                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                } else if ("video" == type) {
+                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                } else if ("audio" == type) {
+                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+                } else if ("document" == type) {
+                    val fileName = getFileName(context, uri)
+                    val cacheDir = getDocumentCacheDir(context)
+                    val file = generateFileName(fileName, cacheDir)
+                    var destinationPath: String? = null
                     if (file != null) {
-                        destinationPath = file.getAbsolutePath();
-                        saveFileFromUri(context, uri, destinationPath);
+                        destinationPath = file.absolutePath
+                        saveFileFromUri(context, uri, destinationPath)
                     }
-                    return destinationPath;
+                    return destinationPath
                 }
 
-                final String selection = "_id=?";
-                final String[] selectionArgs = new String[]{
-                        split[1]
-                };
+                val selection = "_id=?"
+                val selectionArgs = arrayOf(
+                    split[1]
+                )
 
-                return getDataColumn(context, contentUri, selection, selectionArgs);
+                return getDataColumn(
+                    context, contentUri!!, selection, selectionArgs
+                )
+            } else if (isGoogleDriveUri(uri)) {
+                return getGoogleDriveFilePath(uri, context)
             }
-            //GoogleDriveProvider
-            else if (isGoogleDriveUri(uri)) {
-                return getGoogleDriveFilePath(uri, context);
-            }
-        }
-        // MediaStore (and general)
-        else if ("content".equalsIgnoreCase(uri.getScheme())) {
-
+        } else if ("content".equals(uri.scheme, ignoreCase = true)) {
             // Return the remote address
+
             if (isGooglePhotosUri(uri)) {
-                return uri.getLastPathSegment();
-            }
-            // Google drive legacy provider
-            else if (isGoogleDriveUri(uri)) {
-                return getGoogleDriveFilePath(uri, context);
+                return uri.lastPathSegment
+            } else if (isGoogleDriveUri(uri)) {
+                return getGoogleDriveFilePath(uri, context)
             }
 
-            return getDataColumn(context, uri, null, null);
-        }
-        // File
-        else if ("file".equalsIgnoreCase(uri.getScheme())) {
-            return uri.getPath();
+            return getDataColumn(context, uri, null, null)
+        } else if ("file".equals(uri.scheme, ignoreCase = true)) {
+            return uri.path
         }
 
-        return null;
+        return null
     }
 
     /**
@@ -413,17 +391,16 @@ public class FileUtils {
      *
      * @return file A local file that the Uri was pointing to, or null if the
      * Uri is unsupported or pointed to a remote resource.
-     * @author paulburke
-     * @see #getPath(Context, Uri)
+     * @see .getPath
      */
-    public static File getFile(Context context, Uri uri) {
+    fun getFile(context: Context, uri: Uri?): File? {
         if (uri != null) {
-            String path = getPath(context, uri);
-            if (path != null && isLocal(path)) {
-                return new File(path);
+            val path = getPath(context, uri)
+            if (isLocal(path)) {
+                return File(path)
             }
         }
-        return null;
+        return null
     }
 
     /**
@@ -431,30 +408,29 @@ public class FileUtils {
      *
      * @param size
      * @return
-     * @author paulburke
      */
-    public static String getReadableFileSize(int size) {
-        final int BYTES_IN_KILOBYTES = 1024;
-        final DecimalFormat dec = new DecimalFormat("###.#");
-        final String KILOBYTES = " KB";
-        final String MEGABYTES = " MB";
-        final String GIGABYTES = " GB";
-        float fileSize = 0;
-        String suffix = KILOBYTES;
+    fun getReadableFileSize(size: Int): String {
+        val BYTES_IN_KILOBYTES = 1024
+        val dec = DecimalFormat("###.#")
+        val KILOBYTES = " KB"
+        val MEGABYTES = " MB"
+        val GIGABYTES = " GB"
+        var fileSize = 0f
+        var suffix = KILOBYTES
 
         if (size > BYTES_IN_KILOBYTES) {
-            fileSize = size / BYTES_IN_KILOBYTES;
+            fileSize = (size / BYTES_IN_KILOBYTES).toFloat()
             if (fileSize > BYTES_IN_KILOBYTES) {
-                fileSize = fileSize / BYTES_IN_KILOBYTES;
+                fileSize = fileSize / BYTES_IN_KILOBYTES
                 if (fileSize > BYTES_IN_KILOBYTES) {
-                    fileSize = fileSize / BYTES_IN_KILOBYTES;
-                    suffix = GIGABYTES;
+                    fileSize = fileSize / BYTES_IN_KILOBYTES
+                    suffix = GIGABYTES
                 } else {
-                    suffix = MEGABYTES;
+                    suffix = MEGABYTES
                 }
             }
         }
-        return String.valueOf(dec.format(fileSize) + suffix);
+        return (dec.format(fileSize.toDouble()) + suffix).toString()
     }
 
     /**
@@ -462,14 +438,14 @@ public class FileUtils {
      *
      * @return The intent for opening a file with Intent.createChooser()
      */
-    public static Intent createGetContentIntent() {
+    fun createGetContentIntent(): Intent {
         // Implicitly allow the user to select a particular kind of data
-        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
         // The MIME data type filter
-        intent.setType("*/*");
+        intent.setType("*/*")
         // Only return URIs that can be opened with ContentResolver
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        return intent;
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        return intent
     }
 
 
@@ -479,117 +455,115 @@ public class FileUtils {
      * @param file
      * @return The intent for viewing file
      */
-    public static Intent getViewIntent(Context context, File file) {
+    fun getViewIntent(context: Context, file: File): Intent {
         //Uri uri = Uri.fromFile(file);
-        Uri uri = FileProvider.getUriForFile(context, AUTHORITY, file);
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        String url = file.toString();
+        val uri = FileProvider.getUriForFile(context, AUTHORITY, file)
+        val intent = Intent(Intent.ACTION_VIEW)
+        val url = file.toString()
         if (url.contains(".doc") || url.contains(".docx")) {
             // Word document
-            intent.setDataAndType(uri, "application/msword");
+            intent.setDataAndType(uri, "application/msword")
         } else if (url.contains(".pdf")) {
             // PDF file
-            intent.setDataAndType(uri, "application/pdf");
+            intent.setDataAndType(uri, "application/pdf")
         } else if (url.contains(".ppt") || url.contains(".pptx")) {
             // Powerpoint file
-            intent.setDataAndType(uri, "application/vnd.ms-powerpoint");
+            intent.setDataAndType(uri, "application/vnd.ms-powerpoint")
         } else if (url.contains(".xls") || url.contains(".xlsx")) {
             // Excel file
-            intent.setDataAndType(uri, "application/vnd.ms-excel");
+            intent.setDataAndType(uri, "application/vnd.ms-excel")
         } else if (url.contains(".zip") || url.contains(".rar")) {
             // WAV audio file
-            intent.setDataAndType(uri, "application/x-wav");
+            intent.setDataAndType(uri, "application/x-wav")
         } else if (url.contains(".rtf")) {
             // RTF file
-            intent.setDataAndType(uri, "application/rtf");
+            intent.setDataAndType(uri, "application/rtf")
         } else if (url.contains(".wav") || url.contains(".mp3")) {
             // WAV audio file
-            intent.setDataAndType(uri, "audio/x-wav");
+            intent.setDataAndType(uri, "audio/x-wav")
         } else if (url.contains(".gif")) {
             // GIF file
-            intent.setDataAndType(uri, "image/gif");
+            intent.setDataAndType(uri, "image/gif")
         } else if (url.contains(".jpg") || url.contains(".jpeg") || url.contains(".png")) {
             // JPG file
-            intent.setDataAndType(uri, "image/jpeg");
+            intent.setDataAndType(uri, "image/jpeg")
         } else if (url.contains(".txt")) {
             // Text file
-            intent.setDataAndType(uri, "text/plain");
-        } else if (url.contains(".3gp") || url.contains(".mpg") || url.contains(".mpeg") ||
-                url.contains(".mpe") || url.contains(".mp4") || url.contains(".avi")) {
+            intent.setDataAndType(uri, "text/plain")
+        } else if (url.contains(".3gp") || url.contains(".mpg") || url.contains(".mpeg") || url.contains(
+                ".mpe"
+            ) || url.contains(".mp4") || url.contains(".avi")
+        ) {
             // Video files
-            intent.setDataAndType(uri, "video/*");
+            intent.setDataAndType(uri, "video/*")
         } else {
-            intent.setDataAndType(uri, "*/*");
+            intent.setDataAndType(uri, "*/*")
         }
 
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        return intent;
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        return intent
     }
 
-    public static File getDownloadsDir() {
-        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-    }
+    val downloadsDir: File
+        get() = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
 
-    public static File getDocumentCacheDir(@NonNull Context context) {
-        File dir = new File(context.getCacheDir(), DOCUMENTS_DIR);
+    fun getDocumentCacheDir(context: Context): File {
+        val dir = File(context.cacheDir, DOCUMENTS_DIR)
         if (!dir.exists()) {
-            dir.mkdirs();
+            dir.mkdirs()
         }
-        logDir(context.getCacheDir());
-        logDir(dir);
+        logDir(context.cacheDir)
+        logDir(dir)
 
-        return dir;
+        return dir
     }
 
-    private static void logDir(File dir) {
-        if (!DEBUG) return;
-        Log.d(TAG, "Dir=" + dir);
-        File[] files = dir.listFiles();
-        for (File file : files) {
-            Log.d(TAG, "File=" + file.getPath());
+    private fun logDir(dir: File) {
+        if (!DEBUG) return
+        Timber.tag(TAG).d("Dir=$dir")
+        val files = dir.listFiles()
+        files?.forEach { file ->
+            Timber.tag(TAG).d("File=${file.path}")
         }
     }
 
-    @Nullable
-    public static File generateFileName(@Nullable String name, File directory) {
-        if (name == null) {
-            return null;
-        }
+    fun generateFileName(name: String?, directory: File): File? {
+        var name = name ?: return null
 
-        File file = new File(directory, name);
+        var file = File(directory, name)
 
         if (file.exists()) {
-            String fileName = name;
-            String extension = "";
-            int dotIndex = name.lastIndexOf('.');
+            var fileName = name
+            var extension = ""
+            val dotIndex = name.lastIndexOf('.')
             if (dotIndex > 0) {
-                fileName = name.substring(0, dotIndex);
-                extension = name.substring(dotIndex);
+                fileName = name.substring(0, dotIndex)
+                extension = name.substring(dotIndex)
             }
 
-            int index = 0;
+            var index = 0
 
             while (file.exists()) {
-                index++;
-                name = fileName + '(' + index + ')' + extension;
-                file = new File(directory, name);
+                index++
+                name = "$fileName($index)$extension"
+                file = File(directory, name)
             }
         }
 
         try {
             if (!file.createNewFile()) {
-                return null;
+                return null
             }
-        } catch (IOException e) {
-            Log.w(TAG, e);
-            return null;
+        } catch (e: IOException) {
+            Log.w(TAG, e)
+            return null
         }
 
-        logDir(directory);
+        logDir(directory)
 
-        return file;
+        return file
     }
 
     /**
@@ -599,209 +573,201 @@ public class FileUtils {
      * @param path file path
      * @return File
      */
-    public static File writeResponseBodyToDisk(ResponseBody body, String path) {
+    fun writeResponseBodyToDisk(body: ResponseBody, path: String): File? {
         try {
-            File target = new File(path);
+            val target = File(path)
 
-            InputStream inputStream = null;
-            OutputStream outputStream = null;
+            var inputStream: InputStream? = null
+            var outputStream: OutputStream? = null
 
             try {
-                byte[] fileReader = new byte[4096];
+                val fileReader = ByteArray(4096)
 
-                inputStream = body.byteStream();
-                outputStream = new FileOutputStream(target);
+                inputStream = body.byteStream()
+                outputStream = FileOutputStream(target)
 
                 while (true) {
-                    int read = inputStream.read(fileReader);
+                    val read = inputStream.read(fileReader)
 
                     if (read == -1) {
-                        break;
+                        break
                     }
 
-                    outputStream.write(fileReader, 0, read);
+                    outputStream.write(fileReader, 0, read)
                 }
 
-                outputStream.flush();
+                outputStream.flush()
 
-                return target;
-            } catch (IOException e) {
-                return null;
+                return target
+            } catch (e: IOException) {
+                return null
             } finally {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
+                inputStream?.close()
 
-                if (outputStream != null) {
-                    outputStream.close();
-                }
+                outputStream?.close()
             }
-        } catch (IOException e) {
-            return null;
+        } catch (e: IOException) {
+            return null
         }
     }
 
-    private static void saveFileFromUri(Context context, Uri uri, String destinationPath) {
-        InputStream is = null;
-        BufferedOutputStream bos = null;
+    private fun saveFileFromUri(context: Context, uri: Uri, destinationPath: String?) {
+        var `is`: InputStream? = null
+        var bos: BufferedOutputStream? = null
         try {
-            is = context.getContentResolver().openInputStream(uri);
-            bos = new BufferedOutputStream(new FileOutputStream(destinationPath, false));
-            byte[] buf = new byte[1024];
-            is.read(buf);
+            `is` = context.contentResolver.openInputStream(uri)
+            bos = BufferedOutputStream(FileOutputStream(destinationPath, false))
+            val buf = ByteArray(1024)
+            `is`!!.read(buf)
             do {
-                bos.write(buf);
-            } while (is.read(buf) != -1);
-        } catch (IOException e) {
-            e.printStackTrace();
+                bos.write(buf)
+            } while (`is`.read(buf) != -1)
+        } catch (e: IOException) {
+            e.printStackTrace()
         } finally {
             try {
-                if (is != null) is.close();
-                if (bos != null) bos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+                `is`?.close()
+                bos?.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
         }
     }
 
-    public static byte[] readBytesFromFile(String filePath) {
-
-        FileInputStream fileInputStream = null;
-        byte[] bytesArray = null;
+    fun readBytesFromFile(filePath: String): ByteArray? {
+        var fileInputStream: FileInputStream? = null
+        var bytesArray: ByteArray? = null
 
         try {
-
-            File file = new File(filePath);
-            bytesArray = new byte[(int) file.length()];
+            val file = File(filePath)
+            bytesArray = ByteArray(file.length().toInt())
 
             //read file into bytes[]
-            fileInputStream = new FileInputStream(file);
-            fileInputStream.read(bytesArray);
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            fileInputStream = FileInputStream(file)
+            fileInputStream.read(bytesArray)
+        } catch (e: IOException) {
+            e.printStackTrace()
         } finally {
             if (fileInputStream != null) {
                 try {
-                    fileInputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    fileInputStream.close()
+                } catch (e: IOException) {
+                    e.printStackTrace()
                 }
             }
-
         }
 
-        return bytesArray;
-
+        return bytesArray
     }
 
-    public static File createTempImageFile(Context context, String fileName) throws IOException {
+    @Throws(IOException::class)
+    fun createTempImageFile(context: Context, fileName: String): File {
         // Create an image file name
-        File storageDir = new File(context.getCacheDir(), DOCUMENTS_DIR);
-        return File.createTempFile(fileName, ".jpg", storageDir);
+        val storageDir = File(context.cacheDir, DOCUMENTS_DIR)
+        return File.createTempFile(fileName, ".jpg", storageDir)
     }
 
-    public static String getFileName(@NonNull Context context, Uri uri) {
-        String mimeType = context.getContentResolver().getType(uri);
-        String filename = null;
+    fun getFileName(context: Context, uri: Uri): String? {
+        val mimeType = context.contentResolver.getType(uri)
+        var filename: String? = null
 
         if (mimeType == null && context != null) {
-            String path = getPath(context, uri);
+            val path = getPath(context, uri)
             if (path == null) {
-                filename = getName(uri.toString());
+                filename = getName(uri.toString())
             } else {
-                File file = new File(path);
-                filename = file.getName();
+                val file = File(path)
+                filename = file.name
             }
         } else {
-            Cursor returnCursor = context.getContentResolver().query(uri, null,
-                    null, null, null);
+            val returnCursor = context.contentResolver.query(
+                uri, null, null, null, null
+            )
             if (returnCursor != null) {
-                int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                returnCursor.moveToFirst();
-                filename = returnCursor.getString(nameIndex);
-                returnCursor.close();
+                val nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                returnCursor.moveToFirst()
+                filename = returnCursor.getString(nameIndex)
+                returnCursor.close()
             }
         }
 
-        return filename;
+        return filename
     }
 
-    public static String getName(String filename) {
+    fun getName(filename: String?): String? {
         if (filename == null) {
-            return null;
+            return null
         }
-        int index = filename.lastIndexOf('/');
-        return filename.substring(index + 1);
+        val index = filename.lastIndexOf('/')
+        return filename.substring(index + 1)
     }
 
-    private static String getGoogleDriveFilePath(Uri uri, Context context) {
-        Uri returnUri = uri;
-        Cursor returnCursor = context.getContentResolver().query(returnUri, null, null, null, null);
-        /*
+    private fun getGoogleDriveFilePath(uri: Uri, context: Context): String {
+        val returnUri = uri
+        val returnCursor = context.contentResolver.query(returnUri, null, null, null, null)/*
          * Get the column indexes of the data in the Cursor,
          *     * move to the first row in the Cursor, get the data,
          *     * and display it.
          * */
-        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-        int sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE);
-        returnCursor.moveToFirst();
+        val nameIndex = returnCursor!!.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        val sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE)
+        returnCursor.moveToFirst()
 
-        String name = (returnCursor.getString(nameIndex));
-        String size = (Long.toString(returnCursor.getLong(sizeIndex)));
-        File file = new File(context.getCacheDir(), name);
+        val name = (returnCursor.getString(nameIndex))
+        val size = (returnCursor.getLong(sizeIndex).toString())
+        val file = File(context.cacheDir, name)
         try {
-            InputStream inputStream = context.getContentResolver().openInputStream(uri);
-            FileOutputStream outputStream = new FileOutputStream(file);
-            int read = 0;
-            int maxBufferSize = 1 * 1024 * 1024;
-            int bytesAvailable = inputStream.available();
-            int bufferSize = Math.min(bytesAvailable, maxBufferSize);
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val outputStream = FileOutputStream(file)
+            var read = 0
+            val maxBufferSize = 1 * 1024 * 1024
+            val bytesAvailable = inputStream!!.available()
+            val bufferSize = min(bytesAvailable.toDouble(), maxBufferSize.toDouble()).toInt()
 
-            final byte[] buffers = new byte[bufferSize];
-            while ((read = inputStream.read(buffers)) != -1) {
-                outputStream.write(buffers, 0, read);
+            val buffers = ByteArray(bufferSize)
+            while ((inputStream.read(buffers).also { read = it }) != -1) {
+                outputStream.write(buffers, 0, read)
             }
-            inputStream.close();
-            outputStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            inputStream.close()
+            outputStream.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        return file.getPath();
+        return file.path
     }
 
 
     /**
      * Checking file size
      */
-    public static boolean isFileLessThanMiBs(File file, int mb) {
-        int maxFileSize = mb * 1024 * 1024;
-        long l = file.length();
-        String fileSize = Long.toString(l);
-        int finalFileSize = Integer.parseInt(fileSize);
-        return finalFileSize >= maxFileSize;
+    fun isFileLessThanMiBs(file: File, mb: Int): Boolean {
+        val maxFileSize = mb * 1024 * 1024
+        val l = file.length()
+        val fileSize = l.toString()
+        val finalFileSize = fileSize.toInt()
+        return finalFileSize >= maxFileSize
     }
 
 
-    public static File saveBitmapAsFile(Context context, Bitmap bitmap, String fileName) {
-        File directory = context.getFilesDir();
+    fun saveBitmapAsFile(context: Context, bitmap: Bitmap, fileName: String): File? {
+        val directory = context.filesDir
         if (directory == null) {
-            Timber.e("Failed to get external files directory");
-            return null;
+            Timber.e("Failed to get external files directory")
+            return null
         }
-        File file = new File(directory, fileName);
+        val file = File(directory, fileName)
 
         // Write the bitmap to the file
         try {
-            OutputStream outputStream = Files.newOutputStream(file.toPath());
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-            outputStream.flush();
-            outputStream.close();
-            println("File saved successfully: ${file.absolutePath}");
-            return file;
-        } catch (Exception e) {
-            Timber.e("Failed to save file %s", e.getMessage());
-            return null;
+            val outputStream = Files.newOutputStream(file.toPath())
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            outputStream.flush()
+            outputStream.close()
+            DriverManager.println("File saved successfully: \${file.absolutePath}")
+            return file
+        } catch (e: Exception) {
+            Timber.e("Failed to save file %s", e.message)
+            return null
         }
     }
 }

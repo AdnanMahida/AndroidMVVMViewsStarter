@@ -1,6 +1,6 @@
 package com.ad.mvvmstarter.utility.extension
 
-import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,7 +10,10 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
+import android.view.View
 import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
 import androidx.core.content.ContextCompat
 
 
@@ -22,6 +25,14 @@ fun Context.getWindowDimension(): Pair<Int, Int> {
     return Pair(size.x, size.y)
 }
 
+fun Context.hideKeyboard(view: View) {
+    val inputMethodManager =
+        getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+    inputMethodManager.hideSoftInputFromWindow(
+        view.windowToken,
+        0
+    )
+}
 
 fun Context.isNetworkAvailable(): Boolean {
     var result = false
@@ -80,13 +91,19 @@ fun Context.openGoogleMap(address: String, onAppNotAvailable: (() -> Unit?)? = n
     }
 }
 
-fun Context.hasLocationPermission(): Boolean {
+fun Context.hasPermission(permission: String): Boolean {
     return ContextCompat.checkSelfPermission(
         this,
-        Manifest.permission.ACCESS_COARSE_LOCATION
+        permission
     ) == PackageManager.PERMISSION_GRANTED &&
             ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                this, permission
             ) == PackageManager.PERMISSION_GRANTED
+}
+
+fun Context.openAppSystemSettings() {
+    startActivity(Intent().apply {
+        action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+        data = Uri.fromParts("package", packageName, null)
+    })
 }

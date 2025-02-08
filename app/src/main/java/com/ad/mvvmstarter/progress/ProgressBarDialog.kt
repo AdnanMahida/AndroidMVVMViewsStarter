@@ -1,5 +1,6 @@
 package com.ad.mvvmstarter.progress
 
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
 import android.graphics.BlendMode
@@ -91,9 +92,10 @@ class ProgressBarDialog {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     fun setProgress(progress: Int) {
         if (this::binding.isInitialized) {
-            binding.cpTitle.text = "Uploading $progress%"
+            binding.cpTitle.text = "$progress %"
         }
     }
 }

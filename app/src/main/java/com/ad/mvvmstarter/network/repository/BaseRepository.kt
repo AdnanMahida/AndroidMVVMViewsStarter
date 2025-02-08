@@ -6,7 +6,8 @@ import okhttp3.OkHttpClient
 import javax.inject.Inject
 
 class BaseRepository @Inject constructor(
-    private val okHttpClient: OkHttpClient, private val demoService: DemoService
+    private val okHttpClient: OkHttpClient,
+    private val demoService: DemoService
 ) {
     fun getHttpInterceptor() = okHttpClient
 

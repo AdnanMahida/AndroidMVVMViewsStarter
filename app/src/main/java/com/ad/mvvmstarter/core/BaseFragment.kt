@@ -1,23 +1,15 @@
 package com.ad.mvvmstarter.core
 
-import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import com.ad.mvvmstarter.preference.AppPreference
-import com.ad.mvvmstarter.services.LocationHelper
-import com.ad.mvvmstarter.services.LocationService
 import com.ad.mvvmstarter.utility.AppConstants
-import com.ad.mvvmstarter.utility.dialog.DialogUtils
-import com.ad.mvvmstarter.utility.extension.hasLocationPermission
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import javax.inject.Inject
@@ -38,7 +30,7 @@ abstract class BaseFragment : Fragment() {
      * Used when we don't want to create/inflate view if same fragment instance is used.
      */
     var isFirstTimeLoad: Boolean = true
-    var prevViewDataBinding: ViewDataBinding? = null
+    private var prevViewDataBinding: ViewDataBinding? = null
     fun <T : ViewDataBinding> createOrReloadView(
         inflater: LayoutInflater, resLayout: Int, container: ViewGroup?
     ): T {
@@ -213,70 +205,6 @@ abstract class BaseFragment : Fragment() {
                     bottomBar.visibility = View.VISIBLE
                 }
             }
-        }
-    }
-
-
-    fun isNetworkAvailable(): Boolean {
-        if (activity is BaseActivity) {
-            return (activity as BaseActivity).isNetworkAvailable()
-        }
-        return false
-    }
-
-    /**
-     * Requests the current location.
-     */
-    private val permissions = arrayOf(
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION
-    )
-
-    /**
-     * Permission launcher using Activity Result API
-     * */
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            val allGranted = permissions.all { it.value }
-            if (allGranted) {
-                // Permissions granted, fetch the location
-                startLocationTracking()
-            } else {
-                DialogUtils.showConfirmationDialog(context = requireContext(),
-                    title = "",
-                    onPositiveCallback = {
-                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                        startActivity(intent)
-                    },
-                    onNegativeCallback = {
-                        // "Location permissions are required."
-                    })
-            }
-
-        }
-
-
-    fun startLocationTracking() {
-        if (!requireContext().hasLocationPermission()) {
-            // Request permissions using the launcher
-            requestPermissionLauncher.launch(permissions)
-            return
-        }
-
-        LocationHelper.ifLocationEnable(requireContext()) { isEnabled ->
-            if (isEnabled) {
-                Intent(requireContext().applicationContext, LocationService::class.java).apply {
-                    action = LocationService.ACTION_START
-                    requireContext().startService(this)
-                }
-            }
-        }
-    }
-
-    fun stopLocationTracking() {
-        Intent(requireContext().applicationContext, LocationService::class.java).apply {
-            action = LocationService.ACTION_STOP
-            requireContext().startService(this)
         }
     }
 }

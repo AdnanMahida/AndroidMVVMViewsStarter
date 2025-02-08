@@ -17,6 +17,9 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import java.util.Locale
 
+/**
+ * Used for getting location
+ * */
 @SuppressLint("MissingPermission")
 class LocationManager(
     private val context: Context,
@@ -40,7 +43,7 @@ class LocationManager(
             timeInterval
         )
             .apply {
-                /*setMinUpdateDistanceMeters(minimalDistance)*/
+                setMinUpdateDistanceMeters(minimalDistance)
                 setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
                 setWaitForAccurateLocation(true)
             }
@@ -51,7 +54,7 @@ class LocationManager(
         minimalDistance: Float
     ) {
         this.timeInterval = timeInterval
-        /*this.minimalDistance = minimalDistance*/
+        this.minimalDistance = minimalDistance
         createRequest()
         stopLocationTracking()
         startLocationTracking()

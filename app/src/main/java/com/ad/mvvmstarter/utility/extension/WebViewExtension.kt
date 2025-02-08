@@ -9,13 +9,13 @@ fun WebView.loadHtmlText(text: String) {
 }
 
 /**
- * to handle click event for webview
- * because webview click event is not supported natively
+ * to handle click event for web view
+ * because web view click event is not supported natively
  */
 @SuppressLint("ClickableViewAccessibility")
 fun WebView.onTouchListener(callback: () -> Unit) {
     var clickedTime: Long = 0
-    this.setOnTouchListener { v, event ->
+    this.setOnTouchListener { _, event ->
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 clickedTime = event.eventTime

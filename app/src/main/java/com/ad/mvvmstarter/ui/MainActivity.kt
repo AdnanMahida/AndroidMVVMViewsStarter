@@ -37,6 +37,9 @@ class MainActivity : BaseActivity(), GetBottomBarCallback, FragNavController.Roo
         private const val INDEX_HOME = 0
         private const val INDEX_PROFILE = 1
         private const val INDEX_SETTINGS = 2
+
+        // total number of root fragment
+        private const val NUMBER_OF_ROOM_FRAGMENTS = 3
     }
 
     private var currentTabPosition: Int = INDEX_HOME
@@ -130,9 +133,11 @@ class MainActivity : BaseActivity(), GetBottomBarCallback, FragNavController.Roo
     }
 
     private fun unSelectBottomBar() {
-        binding.bottomNV.homeLL.isSelected = false
-        binding.bottomNV.profileLL.isSelected = false
-        binding.bottomNV.settingsLL.isSelected = false
+        with(binding.bottomNV) {
+            homeLL.isSelected = false
+            profileLL.isSelected = false
+            settingsLL.isSelected = false
+        }
     }
 
 
@@ -188,7 +193,8 @@ class MainActivity : BaseActivity(), GetBottomBarCallback, FragNavController.Roo
         }
     }
 
-    override val numberOfRootFragments: Int get() = 3
+    override val numberOfRootFragments: Int get() = NUMBER_OF_ROOM_FRAGMENTS
+
     override fun onBackPressed() {
         val currentFragment = mCurrentFragment
         if (currentFragment != null && currentFragment is BaseFragment) {
@@ -227,12 +233,12 @@ class MainActivity : BaseActivity(), GetBottomBarCallback, FragNavController.Roo
             if (!isGranted) {
                 DialogUtils.showAlertDialog(
                     this@MainActivity,
-                    title = "Notification permission",
-                    positiveBtnText = "Open Setting",
+                    title = getString(R.string.notification_permission),
+                    positiveBtnText = getString(R.string.open_setting),
                     onPositiveCallback = {
                         openAppSystemSettings()
                     },
-                    message = "Enable Notification permission from setting",
+                    message = getString(R.string.enable_notification_permission_from_setting),
                 )
             }
         }

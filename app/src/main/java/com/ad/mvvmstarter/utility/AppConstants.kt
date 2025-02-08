@@ -26,9 +26,9 @@ object AppConstants {
      * */
     const val EXTRA_WITH_OUT_BOTTOM_BAR = "withOutBottomBar"
 
-    /*
-    * Snack Bar types
-    * */
+    /**
+     * Snack Bar types
+     * */
     const val SNACK_BAR_TYPE_ERROR = 1
     const val SNACK_BAR_TYPE_SUCCESS = 2
     const val SNACK_BAR_TYPE_MESSAGE = 3

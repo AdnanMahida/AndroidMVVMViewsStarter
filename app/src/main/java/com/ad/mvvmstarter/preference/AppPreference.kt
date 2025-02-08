@@ -2,12 +2,15 @@ package com.ad.mvvmstarter.preference
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import com.ad.mvvmstarter.data.model.User
 import com.ad.mvvmstarter.utility.helper.getJsonStringFromObject
 import com.ad.mvvmstarter.utility.helper.getObjectFromJsonString
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+
 
 /**
  * This class is used for storing and retrieving shared preference values.
@@ -26,12 +29,17 @@ class AppPreference @Inject constructor(
         private const val USER_PROFILE = "userProfile"
     }
 
-    private val userPreferences: SharedPreferences =
-        context.getSharedPreferences(
-            PREF_USER_PREF,
-            Context.MODE_PRIVATE
-        )
+    private var masterKey: MasterKey = MasterKey.Builder(context)
+        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        .build()
 
+    private val userPreferences: SharedPreferences = EncryptedSharedPreferences.create(
+        context,
+        PREF_USER_PREF,
+        masterKey,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
 
     var deviceToken: String?
         get() = userPreferences.getString(
@@ -44,6 +52,7 @@ class AppPreference @Inject constructor(
                 value
             )
             .apply()
+
     var accessToken: String?
         get() = userPreferences.getString(
             ACCESS_TOKEN,
@@ -53,8 +62,8 @@ class AppPreference @Inject constructor(
             .putString(
                 ACCESS_TOKEN,
                 value
-            )
-            .apply()
+            ).apply()
+
     var isLogin: Boolean
         get() = userPreferences.getBoolean(
             IS_LOGIN,
@@ -64,12 +73,10 @@ class AppPreference @Inject constructor(
             .putBoolean(
                 IS_LOGIN,
                 value
-            )
-            .apply()
+            ).apply()
 
     /**
      * Used to clear SharedPreferences.
-     *
      * @return String
      */
     fun clearUserPreference() {
@@ -105,9 +112,6 @@ class AppPreference @Inject constructor(
                     .putString(
                         USER_PROFILE,
                         getJsonStringFromObject(value)
-                    )
-                    .apply()
+                    ).apply()
             }
-
-
 }
